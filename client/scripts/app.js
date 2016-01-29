@@ -7,26 +7,24 @@ $(function() {
     init: function() {
       app.username = window.location.search.split('username=')[1];
       app.chatRooms = {};
-
       app.$send = $('#send');
-      app.$roomSelect = $('#roomSelect');
+      app.$chats = $('#chats');
       app.$message = $('#message');
+      app.$roomSelect = $('#roomSelect');
       app.$clearChat = $('.clearChat');
       app.$refreshChat = $('.refreshChat');
       app.$makeNewRoom = $('.makeNewRoom');
 
       app.$send.on('submit', function(event) {
-        event.preventDefault(); // prevents page reload
+        event.preventDefault();
         app.handleSubmit();
       });
 
       app.$clearChat.on('click', function(event) {
-        event.preventDefault();
         app.clearMessages();
       });
 
       app.$refreshChat.on('click', function(event) {
-        event.preventDefault();
         app.clearMessages();
         app.fetch();
       });
@@ -36,6 +34,7 @@ $(function() {
         app.clearMessages();
         app.fetch();
       });
+
       app.$makeNewRoom.on('click', function(event) {
         event.preventDefault();
         app.currentRoom = prompt("What's the name of your new room?");
@@ -51,7 +50,7 @@ $(function() {
     },
     send: function(message) {
       $.ajax({
-        url: this.server,
+        url: app.server,
         type: "POST",
         data: JSON.stringify(message),
         contentType: "application/json",
@@ -66,29 +65,39 @@ $(function() {
     fetch: function(chatroom) {
       chatroom = chatroom || "lobby";
       $.ajax({
-        url: this.server,
+        url: app.server,
         type: "GET",
-      data: {order: "-createdAt"}, //, where: { roomname: "lobby" }
-      dataType: "json",
-      success: function(data) {
-        console.log("chatterbox: Fetched! data: ", data);
-        app.$roomSelect.children().remove();
-        for(var i = 0; i < data.results.length; i++) {
-          app.addMessage(data.results[i]);
-          if(!(data.results[i].roomname in app.chatRooms)) {
-            app.chatRooms[data.results[i].roomname] = true;
-          }
+        data: {order: "-createdAt"},
+        dataType: "json",
+        success: function(data) {
+          console.log("chatterbox: Fetched! data: ", data);
+          app.populateRoomsAndChats(data);
+        },
+        error: function(data) {
+          console.log("chatterbox: Failed to fetch data. Error: ", data);
         }
-        for(var room in app.chatRooms) {
-          app.addRoom(room);
-        }
-        app.$roomSelect.val(app.currentRoom);
-      }
-      // error: function() {}
-    });
+      });
     },
+    populateRoomsAndChats: function(data) {
+      app.clearMessages();
+      
+      for(var i = 0; i < data.results.length; i++) {
+        var result = data.results[i];
+        app.addMessage(result);
+        if(!app.chatRooms[result.roomname]) {
+          app.chatRooms[result.roomname] = true;
+        }
+      }
+
+      for(var room in app.chatRooms) {
+        app.addRoom(room);
+      }
+
+      app.$roomSelect.val(app.currentRoom);
+    },
+
     clearMessages: function() {
-      $('#chats').children().remove();
+      app.$chats.html('');
     },
     addMessage: function(message) {
       message.roomname = (message.roomname || "All Rooms").trim();
@@ -107,7 +116,7 @@ $(function() {
         });
 
         div.append(userName, text, roomName);
-        $('#chats').append(div);
+        app.$chats.append(div);
       }
     },
     addRoom: function(room) {
