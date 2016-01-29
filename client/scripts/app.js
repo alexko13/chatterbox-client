@@ -1,6 +1,4 @@
 // YOUR CODE HERE:
-var chatRoomNames = {};
-
 $(function() {
   app = {
     server: 'https://api.parse.com/1/classes/chatterbox',
@@ -8,33 +6,40 @@ $(function() {
     currentRoom: 'lobby',
     init: function() {
       app.username = window.location.search.split('username=')[1];
+      app.chatRooms = {};
 
       app.$send = $('#send');
       app.$roomSelect = $('#roomSelect');
       app.$message = $('#message');
+      app.$clearChat = $('.clearChat');
+      app.$refreshChat = $('.refreshChat');
+      app.$makeNewRoom = $('.makeNewRoom');
 
       app.$send.on('submit', function(event) {
-      event.preventDefault(); // prevents page reload
-      app.handleSubmit();
-    });
-      $('.clearChat').on('click', function(event) {
+        event.preventDefault(); // prevents page reload
+        app.handleSubmit();
+      });
+
+      app.$clearChat.on('click', function(event) {
         event.preventDefault();
         app.clearMessages();
       });
-      $('.refreshChat').on('click', function(event) {
+
+      app.$refreshChat.on('click', function(event) {
         event.preventDefault();
         app.clearMessages();
         app.fetch();
       });
+
       app.$roomSelect.on('change', function(event) {
-        app.currentRoom = $(this).val();
+        app.currentRoom = app.$roomSelect.val();
         app.clearMessages();
         app.fetch();
       });
-      $('.makeNewRoom').on('click', function(event) {
+      app.$makeNewRoom.on('click', function(event) {
         event.preventDefault();
         app.currentRoom = prompt("What's the name of your new room?");
-        chatRoomNames[app.currentRoom] = true;
+        app.chatRooms[app.currentRoom] = true;
         app.addRoom(app.currentRoom);
         app.$roomSelect.val(app.currentRoom);
       });
@@ -70,11 +75,11 @@ $(function() {
         app.$roomSelect.children().remove();
         for(var i = 0; i < data.results.length; i++) {
           app.addMessage(data.results[i]);
-          if(!(data.results[i].roomname in chatRoomNames)) {
-            chatRoomNames[data.results[i].roomname] = true;
+          if(!(data.results[i].roomname in app.chatRooms)) {
+            app.chatRooms[data.results[i].roomname] = true;
           }
         }
-        for(var room in chatRoomNames) {
+        for(var room in app.chatRooms) {
           app.addRoom(room);
         }
         app.$roomSelect.val(app.currentRoom);
@@ -114,7 +119,7 @@ $(function() {
     },
     handleSubmit: function() {
       var messageObj = {
-        text: $message.val(),
+        text: app.$message.val(),
         username: app.username,
         roomname: app.$roomSelect.val()
       };
