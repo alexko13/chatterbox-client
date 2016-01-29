@@ -80,7 +80,6 @@ $(function() {
     },
     populateRoomsAndChats: function(data) {
       app.clearMessages();
-      
       for(var i = 0; i < data.results.length; i++) {
         var result = data.results[i];
         app.addMessage(result);
@@ -89,34 +88,34 @@ $(function() {
         }
       }
 
+      app.$roomSelect.html('');
       for(var room in app.chatRooms) {
         app.addRoom(room);
       }
-
       app.$roomSelect.val(app.currentRoom);
     },
 
     clearMessages: function() {
       app.$chats.html('');
     },
-    addMessage: function(message) {
-      message.roomname = (message.roomname || "All Rooms").trim();
-      if(message.roomname === app.currentRoom) {
-        message.text = (message.text || message.message || "").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        var userName = $('<span class="username">' + message.username + '</span>');
-        var text = $('<span class="message">' + message.text + '</span>');
-        var roomName = $('<span class="roomName">' + message.roomname + '</span>');
-        var div = $('<div></div>');
+    addMessage: function(result) {
+      result.roomname = result.roomname || "lobby";
+      result.text = (result.text || result.result || "").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-        div.addClass(message.roomname);
-        userName.addClass(message.username);
+      if(result.roomname === app.currentRoom) {
+        var $chat = $('<div class="chat"></div>');
+        var $username = $('<span class="username">' + result.username + '</span>');
+        var text = $('<span class="message">' + result.text + '</span>');
 
-        userName.on('click', function() {
-          app.addFriend($(this).attr('class').split(" ")[1]);
+        $chat.addClass(result.roomname);
+        $username.attr('data-username', result.username);
+
+        $username.on('click', function() {
+          app.addFriend($(this).attr('data-username'));
         });
 
-        div.append(userName, text, roomName);
-        app.$chats.append(div);
+        $chat.append($username, text);
+        app.$chats.append($chat);
       }
     },
     addRoom: function(room) {
@@ -124,7 +123,7 @@ $(function() {
       app.$roomSelect.append(newOption);
     },
     addFriend: function(username) {
-      $('.' + username).addClass('friends');
+      $('[data-username="' + username + '"]').addClass('friends');
     },
     handleSubmit: function() {
       var messageObj = {
