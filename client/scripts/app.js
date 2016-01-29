@@ -104,7 +104,7 @@ $(function() {
       if(result.roomname === app.currentRoom) {
         var $chat = $('<div class="chat"></div>');
         var $username = $('<span class="username">' + result.username + '</span>');
-        var $text = $('<span class="message">' + result.text + '</span>');
+        var $text = $('<br/><span class="message">' + result.text + '</span>');
 
         $chat.addClass(result.roomname);
         $username.attr('data-username', result.username);
